@@ -1,7 +1,7 @@
 # terraform
 terrafor*
 .terrafor*
-locals.tf
+secret.tfvars
 ssl/
 
 # macOS

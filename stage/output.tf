@@ -6,12 +6,18 @@ output "application-gateway-public-ip" {
     value = azurerm_public_ip.public-ip.ip_address
 }
 
-output "client_certificate" {
-    value = azurerm_kubernetes_cluster.k8s.kube_config_raw
-    sensitive = true
+output "subscription-id" {
+    value = data.azurerm_subscription.subscription.subscription_id
 }
 
-output "kube_config" {
-    value = azurerm_kubernetes_cluster.k8s.kube_config_raw
-    sensitive = true
+output "identity-principal-id" {
+    value = azurerm_user_assigned_identity.identity.principal_id
+}
+
+output "identity-armAuth-resource-id" {
+    value = azurerm_user_assigned_identity.identity.id
+}
+
+output "identity-armAuth-client-id" {
+    value = azurerm_user_assigned_identity.identity.client_id
 }

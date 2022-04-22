@@ -21,7 +21,7 @@ resource "azurerm_resource_group" "resource-group" {
 
 # Define User Assigned Identities
 resource "azurerm_user_assigned_identity" "identity" {
-    name                            = var.identity-name
+    name                            = var.identity-set["identity-name"]
     resource_group_name             = data.azurerm_resource_group.resource-group.name
     location                        = data.azurerm_resource_group.resource-group.location
     tags                            = var.tagging
@@ -36,11 +36,18 @@ resource "azurerm_virtual_network" "vnet" {
     tags                            = var.tagging
 }
 
-resource "azurerm_subnet" "subnet" {
-    name                            = var.subnet-network-set["subnet-name"]
+resource "azurerm_subnet" "application-gateway-subnet" {
+    name                            = var.subnet-network-set["application-gateway-subnet-name"]
     resource_group_name             = data.azurerm_resource_group.resource-group.name
     virtual_network_name            = azurerm_virtual_network.vnet.name
-    address_prefixes                = [var.subnet-network-set["subnet-cidr"]]
+    address_prefixes                = [var.subnet-network-set["application-gateway-subnet-cidr"]]
+}
+
+resource "azurerm_subnet" "aks-subnet" {
+    name                            = var.subnet-network-set["aks-subnet-name"]
+    resource_group_name             = data.azurerm_resource_group.resource-group.name
+    virtual_network_name            = azurerm_virtual_network.vnet.name
+    address_prefixes                = [var.subnet-network-set["aks-subnet-cidr"]]
 }
 
 # Create Public IP
@@ -59,6 +66,11 @@ resource "azurerm_application_gateway" "application-gateway" {
     resource_group_name             = data.azurerm_resource_group.resource-group.name
     location                        = data.azurerm_resource_group.resource-group.location
 
+    identity {
+        type                        = "UserAssigned"
+        identity_ids                = [azurerm_user_assigned_identity.identity.id]
+    }
+
     sku {
         name                        = var.application-gateway-set["sku-name"]
         tier                        = var.application-gateway-set["sku-tier"]
@@ -67,13 +79,13 @@ resource "azurerm_application_gateway" "application-gateway" {
 
     ssl_certificate {
         name                        = local.ssl-name
-        data                        = local.data
-        password                    = local.password
+        data                        = local.ssl-data
+        password                    = var.ssl-password
     }
 
     gateway_ip_configuration {
         name                        = var.application-gateway-set["gateway-ip-configuration-name"]
-        subnet_id                   = azurerm_subnet.subnet.id
+        subnet_id                   = azurerm_subnet.application-gateway-subnet.id
     }
 
     frontend_port {
@@ -104,6 +116,7 @@ resource "azurerm_application_gateway" "application-gateway" {
         frontend_ip_configuration_name      = var.application-gateway-set["frontend-ip-configuration-name"]
         frontend_port_name                  = var.application-gateway-set["frontend-port-name"]
         protocol                            = var.application-gateway-set["listener-protocol"]
+        ssl_certificate_name                = local.ssl-name
     }
 
     request_routing_rule {
@@ -128,7 +141,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     kubernetes_version              = var.cluster-set["version"]
 
     ingress_application_gateway {
-        subnet_id                   = azurerm_subnet.subnet.id
+        subnet_id                   = azurerm_subnet.application-gateway-subnet.id
     }
     network_profile {
         network_plugin              = var.cluster-set["network_plugin"]
@@ -139,10 +152,47 @@ resource "azurerm_kubernetes_cluster" "k8s" {
         name                        = var.cluster-set["default-nodepool-name"]
         node_count                  = var.cluster-set["default-nodepool-count"]
         vm_size                     = var.cluster-set["default-nodepool-vm-size"]
+        os_disk_size_gb             = var.cluster-set["default-nodepool-vm-os-disk-size"]
+        vnet_subnet_id              = azurerm_subnet.aks-subnet.id
     }
-    identity {
-        type                        = var.cluster-set["identity"]
+    linux_profile {
+        admin_username              = var.cluster-set["default-nodepool-vm-admin-name"]
+        ssh_key {
+          key_data                  = local.default-nodepool-vm-admin-key
+        }
     }
 
+    depends_on                      = [azurerm_virtual_network.vnet, azurerm_application_gateway.application-gateway]
     tags                            = var.tagging
+}
+
+
+# Application Gateway - User Assignment
+
+resource "azurerm_role_assignment" "role-assignment-1" {
+    scope                           = azurerm_subnet.aks-subnet.id
+    role_definition_name            = var.identity-set["role-assignment-1-name"]
+    principal_id                    = azurerm_user_assigned_identity.identity.principal_id
+    depends_on                      = [azurerm_virtual_network.vnet]
+}
+
+resource "azurerm_role_assignment" "role-assignment-2" {
+    scope                           = azurerm_user_assigned_identity.identity.id
+    role_definition_name            = var.identity-set["role-assignment-2-name"]
+    principal_id                    = azurerm_user_assigned_identity.identity.principal_id
+    depends_on                      = [azurerm_user_assigned_identity.identity]
+}
+
+resource "azurerm_role_assignment" "role-assignment-3" {
+    scope                           = azurerm_application_gateway.application-gateway.id
+    role_definition_name            = var.identity-set["role-assignment-3-name"]
+    principal_id                    = azurerm_user_assigned_identity.identity.principal_id
+    depends_on                      = [azurerm_user_assigned_identity.identity, azurerm_application_gateway.application-gateway]
+}
+
+resource "azurerm_role_assignment" "role-assignment-4" {
+    scope                           = data.azurerm_resource_group.resource-group.id
+    role_definition_name            = var.identity-set["role-assignment-4-name"]
+    principal_id                    = azurerm_user_assigned_identity.identity.principal_id
+    depends_on                      = [azurerm_user_assigned_identity.identity, azurerm_application_gateway.application-gateway]
 }
