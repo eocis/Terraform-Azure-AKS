@@ -1,0 +1,9 @@
+# terraform
+terrafor*
+.terrafor*
+locals.tf
+ssl/
+
+# macOS
+.DS_Store
+
