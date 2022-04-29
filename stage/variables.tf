@@ -28,26 +28,15 @@ variable "vnet-network-set" {
 variable "subnet-network-set" {
     type                                    = map(string)
     default                                 = {
-        "application-gateway-subnet-name"   = "MSA-AKS-cluster-subnet"
-        "application-gateway-subnet-cidr"   = "172.0.0.0/24"
-        "aks-subnet-name"                   = "MSA-aks-subnet"
-        "aks-subnet-cidr"                   = "172.0.10.0/24"
+        "subnet-name"   = "MSA-AKS-cluster-subnet"
+        "subnet-cidr"   = "172.0.0.0/24"
     }
-}
-
-variable "public-ip-set" {
-    type                                = map(string)
-    default                             = {
-        "name"                          = "MSA-AKS-public-ip"
-        "allocation-method"             = "Static"
-        "sku"                           = "Standard"
-    }
-  
 }
 
 variable "application-gateway-set" {
     type                                    = map(string)
     default                                 = {
+        "subnet-cidr"                       = "172.0.10.0/24"
         "application-gateway-name"          = "MSA-AKS-application-gateway"
         "sku-name"                          = "Standard_v2"
         "sku-tier"                          = "Standard_v2"
@@ -74,11 +63,11 @@ variable "cluster-set" {
     type                                    = map(string)
     default                                 = {
         "name"                              = "MSA-AKS-cluster"
-        "version"                           = "1.21"
+        "version"                           = "1.21.9"
         "dns-prefix"                        = "MSA-k8s-dns-prefix" 
         "identity"                          = "SystemAssigned"
-        "network_plugin"                    = "kubenet"
-        "pod_cidr"                          = "100.0.0.0/16"
+        "network-plugin"                    = "azure"
+        "pod-cidr"                          = "100.0.0.0/16"
         "default-nodepool-name"             = "default"
         "default-nodepool-count"            = "2"
         "default-nodepool-vm-size"          = "Standard_D3_v2"
@@ -94,8 +83,4 @@ variable "tagging" {
         "Create by"                     = "kmpark"
         "terraform"                     = "true"
     }
-}
-
-variable "ssl-password" {
-    sensitive = true
 }
