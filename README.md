@@ -32,7 +32,18 @@ az aks get-credentials --name MSA-cluster --resource-group Cloud_MSA-Dev-Test
 
 > ## 빌드 과정
 
+1. Resource Group 정의
+2. VNet 생성
+3. K8S Cluster 및 NodePool 생성
 
+
+> ## 모듈 설정  
+
+Container Insight 및 Log Analytics를 비활성화 방법. (모듈 코드수정)
+
+방법
+
+.terraform > modules > variables.tf > 77줄 enable_log_analytics_workspace default 값 false 설정
 
 > ## 주의사항
 

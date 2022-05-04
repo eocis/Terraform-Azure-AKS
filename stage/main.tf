@@ -22,6 +22,7 @@ module "network" {
 module "aks" {
   source                           = "Azure/aks/azurerm"
   resource_group_name              = data.azurerm_resource_group.resource-group.name
+  # 아래 정보를 입력하지 않으면 자동으로 생성됩니다.
   # client_id                        = "your-service-principal-client-appid"
   # client_secret                    = "your-service-principal-client-password"
   kubernetes_version               = var.cluster-set["version"]
@@ -47,6 +48,7 @@ module "aks" {
   agents_pool_name                 = "exnodepool"
   agents_availability_zones        = ["1", "2"]
   agents_type                      = "VirtualMachineScaleSets"
+  enable_log_analytics_workspace = false
 
   agents_labels = {
     "nodepool" : "defaultnodepool"

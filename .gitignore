@@ -7,3 +7,5 @@ ssl/
 # macOS
 .DS_Store
 
+# backup file
+*.bak
