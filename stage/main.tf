@@ -68,4 +68,6 @@ module "aks" {
   net_profile_service_cidr       = "10.0.0.0/16"
 
   depends_on = [module.network]
+
+  tags = var.tagging
 }

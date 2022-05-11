@@ -1,32 +1,8 @@
-> ## 현재 작업 중인 코드로 정상 작동하지 않을 수 있습니다.
-
----
-
-
 > ### Begin
 
-https://docs.microsoft.com/ko-kr/azure/developer/terraform/create-k8s-cluster-with-aks-applicationgateway-ingress
+AKS 부분 Resource를 정의하지 않고 Module을 사용한 빌드입니다.  
 
-Key vault를 사용한 인증서 배포는 이 글에서 진행하지 않습니다.
-
-<br>
-
-> ### AKS Kubeconfig 가져오는 방법
-
-```
-az aks get-credentials --name MSA-cluster --resource-group Cloud_MSA-Dev-Test 
-```
-
-<br>
-
-> ### Terraform Secret Variables 설정
-
-```terraform
-+ ssl_certificate {
-    # At least one attribute in this block is (or was) sensitive,
-    # so its contents will not be displayed.
-}
-```
+https://registry.terraform.io/modules/Azure/aks/azurerm/latest
 
 <br>
 
@@ -34,7 +10,14 @@ az aks get-credentials --name MSA-cluster --resource-group Cloud_MSA-Dev-Test
 
 1. Resource Group 정의
 2. VNet 생성
-3. K8S Cluster 및 NodePool 생성
+3. AKS 클러스터 정의
+    - client, client id 지정(없으면 자동으로 생성)
+    - Cluster Spec 설정
+    - Nodepool 설정
+    - Cluster RBAC 설정
+    - Application Gateway 설정
+
+<br>
 
 
 > ## 모듈 설정  
@@ -45,9 +28,22 @@ Container Insight 및 Log Analytics를 비활성화 방법. (모듈 코드수정
 
 .terraform > modules > variables.tf > 77줄 enable_log_analytics_workspace default 값 false 설정
 
+
+<br>
+
+
+> ### AKS Kubeconfig 가져오는 방법
+
+```
+az aks get-credentials --name <cluster-name> --resource-group <resource-group-name>
+```
+
+<br>
+
 > ## 주의사항
 
-- 모듈 사용시 클러스터 생성중 인터넷 연결이 끊어지고 다시 코드를 실행했을때 생기는 오류이다.
+- 모듈 사용시 클러스터 생성중 인터넷 연결이 끊어지고 다시 코드를 실행했을때 생기는 오류이다.  
+(아래 오류 발생시 완전 Azure Portal에서 관련 리소스를 모두 삭제 후 다시 실행해줘야한다.)
 
 ---
 
